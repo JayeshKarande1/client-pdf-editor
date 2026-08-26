@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDFZen - 100% Client-Side PDF Editor & Suite</title>
+  
+  <!-- Tailwind CSS & Inter Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Core Client-Side PDF Libraries (Local Assets) -->
+  <script src="./js/libs/pdf.min.js"></script>
+  <script src="./js/libs/pdf-lib.min.js"></script>
+  <script src="./js/libs/fabric.min.js"></script>
+  <script src="./js/libs/jszip.min.js"></script>
+  <script src="./js/libs/FileSaver.min.js"></script>
+  <script src="./js/libs/lucide.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP NAVBAR -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" data-nav-view="home">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <i data-lucide="file-text" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <span class="text-xl font-black tracking-tight text-slate-900">PDF<span class="text-indigo-600">Zen</span></span>
+          <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 rounded-full">100% Client-Side</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center space-x-1">
+        <button data-nav-view="home" class="nav-link px-3 py-2 rounded-lg text-sm font-semibold text-indigo-600 hover:bg-slate-50 transition-colors">Home</button>
+        <button data-nav-view="editor" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Visual Editor</button>
+        <button data-nav-view="merge" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Merge</button>
+        <button data-nav-view="split" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Split</button>
+        <button data-nav-view="organize" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Organize</button>
+        <button data-nav-view="convert" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Convert</button>
+        <button data-nav-view="watermark" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Watermark</button>
+        <button data-nav-view="security" class="nav-link px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors">Protect</button>
+      </nav>
+
+      <!-- Primary Action -->
+      <div class="flex items-center space-x-3">
+        <button id="navOpenFileBtn" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition-all">
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span>Open PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP VIEWS CONTAINER -->
+  <main class="flex-1 flex flex-col relative overflow-hidden">
+
+    <!-- ==================== VIEW 1: HOME DASHBOARD ==================== -->
+    <div id="view-home" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <!-- Hero -->
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-indigo-700 text-xs font-semibold mb-4">
+          <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+          <span>Zero Server Uploads • Maximum Privacy & Speed</span>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          Complete PDF Suite That Runs <br class="hidden sm:inline" /><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">100% in Your Browser</span>
+        </h1>
+        <p class="mt-4 text-lg text-slate-600">
+          Edit, annotate, merge, split, rotate, convert, and protect your PDF documents client-side without any server costs or privacy risks.
+        </p>
+      </div>
+
+      <!-- Quick Upload Dropzone -->
+      <div id="editorDropzone" class="max-w-2xl mx-auto mb-12 p-8 border-2 border-dashed border-indigo-300 rounded-2xl bg-white/70 hover:bg-indigo-50/50 transition-all cursor-pointer text-center group shadow-sm">
+        <input type="file" id="editorFileInput" accept="application/pdf" class="hidden" />
+        <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner">
+          <i data-lucide="file-up" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800">Drop your PDF here or click to browse</h3>
+        <p class="text-xs text-slate-500 mt-1">Instant client-side visual editor opens immediately</p>
+        <button id="btnHomeLoadSample" class="mt-3 inline-flex items-center space-x-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>Try with sample PDF</span>
+        </button>
+      </div>
+
+      <!-- Tools Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <!-- Card: Edit PDF -->
+        <div data-nav-view="editor" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <i data-lucide="edit-3" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Visual PDF Editor</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Add text, annotations, freehand drawings, shapes, signatures, and images directly onto any PDF page.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-indigo-600">
+            <span>Open Editor</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Card: Merge PDF -->
+        <div data-nav-view="merge" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center mb-4 group-hover:bg-violet-600 group-hover:text-white transition-colors">
+              <i data-lucide="files" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-violet-600 transition-colors">Merge PDF</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Combine multiple PDF files into one organized document in whatever sequence you want.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-violet-600">
+            <span>Merge Files</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Card: Split PDF -->
+        <div data-nav-view="split" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+              <i data-lucide="scissors" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-rose-600 transition-colors">Split PDF</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Extract specific pages or page ranges (e.g. 1-3, 5, 8-10) into separate documents instantly.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-rose-600">
+            <span>Split Document</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Card: Organize & Rotate -->
+        <div data-nav-view="organize" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+              <i data-lucide="layout-grid" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors">Organize & Rotate</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Drag and drop page thumbnails to reorder, rotate pages 90°, or remove unnecessary pages.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-amber-600">
+            <span>Organize Pages</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Card: Convert Images & PDF -->
+        <div data-nav-view="convert" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <i data-lucide="image" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Image <-> PDF</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Convert JPG/PNG images to PDF or extract all PDF pages as high-resolution images in a ZIP.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-emerald-600">
+            <span>Convert Files</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+
+        <!-- Card: Watermark & Page Numbers -->
+        <div data-nav-view="watermark" class="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 transition-all cursor-pointer group flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center mb-4 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+              <i data-lucide="stamp" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">Watermark & Numbers</h3>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed">Add customizable text watermarks, diagonal stamps, and automated page numbering with live preview.</p>
+          </div>
+          <div class="mt-4 flex items-center text-sm font-semibold text-cyan-600">
+            <span>Add Watermark</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 2: VISUAL PDF EDITOR ==================== -->
+    <div id="view-editor" class="view-container flex-1 flex flex-col hidden h-full">
+      
+      <!-- Editor Top Control Bar -->
+      <div class="h-14 bg-white border-b border-slate-200 px-4 flex items-center justify-between z-30 flex-shrink-0">
+        <!-- Title & Back -->
+        <div class="flex items-center space-x-3 min-w-0">
+          <input type="text" id="editorDocTitle" class="font-bold text-slate-800 text-sm bg-transparent hover:bg-slate-100 focus:bg-white focus:ring-1 focus:ring-indigo-500 rounded px-2 py-1 border border-transparent hover:border-slate-300 transition-colors truncate max-w-xs" value="Untitled Document" />
+          <span id="pageIndicator" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">1 / 1</span>
+        </div>
+
+        <!-- Center: Zoom & Undo/Redo -->
+        <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl">
+          <button id="btnUndo" class="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Undo (Ctrl+Z)" disabled>
+            <i data-lucide="undo-2" class="w-4 h-4 pointer-events-none"></i>
+          </button>
+          <button id="btnRedo" class="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:shadow-sm disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Redo (Ctrl+Y)" disabled>
+            <i data-lucide="redo-2" class="w-4 h-4 pointer-events-none"></i>
+          </button>
+          <div class="w-px h-4 bg-slate-300 mx-1"></div>
+          <button id="btnZoomOut" class="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Zoom Out">
+            <i data-lucide="zoom-out" class="w-4 h-4"></i>
+          </button>
+          <span id="zoomDisplay" class="text-xs font-bold text-slate-700 px-1.5 min-w-[42px] text-center">100%</span>
+          <button id="btnZoomIn" class="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Zoom In">
+            <i data-lucide="zoom-in" class="w-4 h-4"></i>
+          </button>
+          <button id="btnZoomFit" class="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:shadow-sm transition-all" title="Fit to 100%">
+            <i data-lucide="maximize-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Right: Export / Save Action & Text Options Toggle -->
+        <div class="flex items-center space-x-2">
+          <button id="btnToggleTextOptions" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-colors" title="Typography & Text Options Panel">
+            <i data-lucide="sliders" class="w-4 h-4 pointer-events-none"></i>
+          </button>
+          <button id="btnDeleteObject" class="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors opacity-40" title="Delete Selected Object (Del)">
+            <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+          </button>
+          <button id="btnSaveEditedPdf" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition-all">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Save & Download</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Main Work Area (Sidebar + Canvas Viewport + Text Options Drawer) -->
+      <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Thumbnail Sidebar -->
+        <aside class="w-56 bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0 z-20">
+          <div class="p-3 border-b border-slate-200 font-semibold text-xs text-slate-500 uppercase tracking-wider flex items-center justify-between">
+            <span>Pages</span>
+            <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
+          </div>
+          <div id="thumbnailList" class="flex-1 overflow-y-auto p-3 space-y-3">
+            <!-- Dynamically populated thumbnails -->
+          </div>
+        </aside>
+
+        <!-- Center Viewport -->
+        <div id="editorViewport" class="flex-1 bg-slate-200/80 overflow-auto p-6 flex flex-col items-center relative">
+          
+          <!-- Upload Splash (shown if no document is loaded) -->
+          <div id="editorUploadSplash" class="my-auto text-center p-12 bg-white rounded-3xl border border-slate-200 shadow-xl max-w-lg">
+            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
+              <i data-lucide="file-plus" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">No Document Open</h3>
+            <p class="text-sm text-slate-500 mb-6">Open a PDF from your computer to begin annotating, editing, and signing.</p>
+            <div class="flex items-center justify-center space-x-3">
+              <button onclick="document.getElementById('editorFileInput').click()" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-indigo-200">
+                <i data-lucide="folder-open" class="w-4 h-4"></i>
+                <span>Select PDF File</span>
+              </button>
+              <button id="btnSplashLoadSample" class="inline-flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+                <i data-lucide="file-check" class="w-4 h-4 text-indigo-600"></i>
+                <span>Load Sample PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Multi-page Canvas Container -->
+          <div id="editorWorkspace" class="hidden w-full flex flex-col items-center">
+            <div id="pdfPagesContainer" class="flex flex-col items-center py-4">
+              <!-- Rendered Pages will appear here -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Text Options Sidebar (Canva / Adobe Acrobat Style) -->
+        <aside id="textOptionsDrawer" class="w-72 bg-white border-l border-slate-200 flex flex-col flex-shrink-0 z-20 shadow-lg hidden">
+          <!-- Drawer Header -->
+          <div class="p-3.5 border-b border-slate-200 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="type" class="w-4 h-4 text-indigo-600"></i>
+              <h3 class="font-bold text-sm text-slate-800">Text options</h3>
+            </div>
+            <button id="btnCloseTextOptions" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+              <i data-lucide="x" class="w-4 h-4 pointer-events-none"></i>
+            </button>
+          </div>
+
+          <!-- Drawer Scrollable Content -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-4 text-xs text-slate-700">
+            
+            <!-- Section 1: Turn Into Presets -->
+            <div>
+              <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Turn into</label>
+              <select id="optPresetSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                <option value="normal">Normal text (12px)</option>
+                <option value="title">Title / Big Heading (32px)</option>
+                <option value="h1">Heading 1 (24px)</option>
+                <option value="h2">Heading 2 (18px)</option>
+                <option value="subheading">Subheading / Italic (15px)</option>
+                <option value="caption">Caption / Small (10px)</option>
+                <option value="code">Monospace Code (12px)</option>
+              </select>
+            </div>
+
+            <!-- Section 2: Font & Size -->
+            <div>
+              <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Font & size</label>
+              <div class="flex items-center space-x-2">
+                <select id="optFontFamily" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer truncate">
+                  <option value="Segoe UI, DejaVu Sans, Arial, sans-serif">Segoe UI / Arial (Sans)</option>
+                  <option value="Georgia, Times New Roman, serif">Times New Roman (Serif)</option>
+                  <option value="Consolas, Courier New, monospace">Consolas / Courier (Mono)</option>
+                  <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                  <option value="Inter, sans-serif">Inter</option>
+                  <option value="Roboto, sans-serif">Roboto</option>
+                  <option value="Open Sans, sans-serif">Open Sans</option>
+                  <option value="Montserrat, sans-serif">Montserrat</option>
+                  <option value="Playfair Display, serif">Playfair Display</option>
+                  <option value="Great Vibes, cursive">Great Vibes (Cursive)</option>
+                  <option value="Caveat, cursive">Caveat (Handwriting)</option>
+                </select>
+                <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+                  <button id="btnFontSizeDec" class="px-2 py-2 hover:bg-slate-200 text-slate-600 font-bold">-</button>
+                  <input type="number" id="optFontSize" value="16" min="6" max="120" class="w-11 text-center font-bold text-xs bg-transparent border-0 focus:ring-0 py-1.5" />
+                  <button id="btnFontSizeInc" class="px-2 py-2 hover:bg-slate-200 text-slate-600 font-bold">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Decoration -->
+            <div>
+              <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Decoration</label>
+              <div class="grid grid-cols-4 gap-1.5 bg-slate-50 p-1 border border-slate-200 rounded-xl">
+                <button id="optBoldBtn" class="py-1.5 rounded-lg hover:bg-white text-center font-bold text-slate-700 transition-all" title="Bold">B</button>
+                <button id="optItalicBtn" class="py-1.5 rounded-lg hover:bg-white text-center italic font-serif text-slate-700 transition-all" title="Italic">I</button>
+                <button id="optUnderlineBtn" class="py-1.5 rounded-lg hover:bg-white text-center underline font-medium text-slate-700 transition-all" title="Underline">U</button>
+                <button id="optStrikeBtn" class="py-1.5 rounded-lg hover:bg-white text-center line-through font-medium text-slate-700 transition-all" title="Strikethrough">S</button>
+              </div>
+            </div>
+
+            <!-- Section 4: Color & Opacity -->
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Text Color</label>
+                  <input type="color" id="optTextColor" value="#0f172a" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+                </div>
+                <!-- Color Swatches -->
+                <div class="flex items-center space-x-1.5">
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-slate-900" data-color="#0f172a"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-blue-600" data-color="#2563eb"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-red-600" data-color="#dc2626"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-emerald-600" data-color="#16a34a"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-amber-500" data-color="#f59e0b"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-purple-600" data-color="#9333ea"></button>
+                  <button class="opt-color-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-slate-400" data-color="#94a3b8"></button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Highlight Color</label>
+                  <input type="color" id="optBgColor" value="#fef08a" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+                </div>
+                <!-- Highlight Swatches -->
+                <div class="flex items-center space-x-1.5">
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-white" data-color="" title="Transparent"></button>
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-yellow-200" data-color="#fef08a" title="Yellow"></button>
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-green-200" data-color="#bbf7d0" title="Green"></button>
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-blue-200" data-color="#bfdbfe" title="Blue"></button>
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-pink-200" data-color="#fbcfe8" title="Pink"></button>
+                  <button class="opt-bg-swatch w-5 h-5 rounded-full border border-slate-300 shadow-sm bg-orange-200" data-color="#fed7aa" title="Orange"></button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Opacity</label>
+                  <span id="optOpacityValue" class="text-[11px] font-bold text-slate-700">100%</span>
+                </div>
+                <input type="range" id="optOpacitySlider" min="10" max="100" value="100" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-3"></div>
+
+            <!-- Section 5: Alignment & Lists -->
+            <div class="space-y-3">
+              <div>
+                <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Alignment</label>
+                <div class="grid grid-cols-4 gap-1.5 bg-slate-50 p-1 border border-slate-200 rounded-xl">
+                  <button class="opt-align-btn py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all active-toggle" data-align="left" title="Align Left">
+                    <i data-lucide="align-left" class="w-4 h-4 pointer-events-none"></i>
+                  </button>
+                  <button class="opt-align-btn py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" data-align="center" title="Align Center">
+                    <i data-lucide="align-center" class="w-4 h-4 pointer-events-none"></i>
+                  </button>
+                  <button class="opt-align-btn py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" data-align="right" title="Align Right">
+                    <i data-lucide="align-right" class="w-4 h-4 pointer-events-none"></i>
+                  </button>
+                  <button class="opt-align-btn py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" data-align="justify" title="Justify">
+                    <i data-lucide="align-justify" class="w-4 h-4 pointer-events-none"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">List format</label>
+                <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 border border-slate-200 rounded-xl">
+                  <button id="optListNone" class="py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" title="No List">
+                    <i data-lucide="minus" class="w-4 h-4"></i>
+                  </button>
+                  <button id="optListBullet" class="py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" title="Bulleted List">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                  </button>
+                  <button id="optListNumber" class="py-1.5 rounded-lg hover:bg-white flex items-center justify-center text-slate-700 transition-all" title="Numbered List">
+                    <i data-lucide="list-ordered" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Case Transform</label>
+                <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 border border-slate-200 rounded-xl">
+                  <button id="optCaseUpper" class="py-1 rounded-lg hover:bg-white font-bold text-[10px] text-slate-700 transition-all" title="UPPERCASE">ABC</button>
+                  <button id="optCaseLower" class="py-1 rounded-lg hover:bg-white font-medium text-[10px] text-slate-700 transition-all" title="lowercase">abc</button>
+                  <button id="optCaseTitle" class="py-1 rounded-lg hover:bg-white font-semibold text-[10px] text-slate-700 transition-all" title="Title Case">Abc</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-3"></div>
+
+            <!-- Section 6: Spacing & Kerning -->
+            <div class="space-y-3">
+              <div>
+                <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Line spacing</label>
+                <select id="optLineSpacing" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                  <option value="1.0">1.0 (Single)</option>
+                  <option value="1.16" selected>1.16 (Default)</option>
+                  <option value="1.25">1.25 (Relaxed)</option>
+                  <option value="1.5">1.5 (1.5x)</option>
+                  <option value="2.0">2.0 (Double)</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">Letter spacing</label>
+                  <span id="optLetterSpacingValue" class="text-[11px] font-bold text-slate-700">0</span>
+                </div>
+                <input type="range" id="optLetterSpacing" min="-20" max="200" value="0" class="w-full accent-indigo-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-3"></div>
+
+            <!-- Section 7: Position & Actions -->
+            <div class="space-y-2">
+              <label class="block font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-[10px]">Layer & Actions</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="optLayerFront" class="flex items-center justify-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-xl font-medium transition-colors">
+                  <i data-lucide="bring-to-front" class="w-3.5 h-3.5"></i>
+                  <span>To Front</span>
+                </button>
+                <button id="optLayerBack" class="flex items-center justify-center space-x-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded-xl font-medium transition-colors">
+                  <i data-lucide="send-to-back" class="w-3.5 h-3.5"></i>
+                  <span>To Back</span>
+                </button>
+                <button id="optDuplicateText" class="flex items-center justify-center space-x-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-1.5 rounded-xl font-medium transition-colors">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Duplicate</span>
+                </button>
+                <button id="optDeleteText" class="flex items-center justify-center space-x-1.5 bg-red-50 hover:bg-red-100 text-red-700 py-1.5 rounded-xl font-medium transition-colors">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
+        <!-- FLOATING EDITING TOOLBAR -->
+        <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center space-y-2 pointer-events-auto">
+          
+          <!-- Secondary Contextual Properties Bar -->
+          <!-- 1. Text Properties -->
+          <div id="textPropertiesBar" class="glass-panel hidden px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-lg text-xs">
+            <select id="propFontFamily" class="bg-transparent border-0 font-medium text-slate-700 focus:ring-0 cursor-pointer">
+              <option value="Helvetica">Helvetica (Sans-Serif)</option>
+              <option value="Times">Times New Roman (Serif)</option>
+              <option value="Courier">Courier (Monospace)</option>
+              <option value="Arial">Arial</option>
+            </select>
+            <div class="w-px h-4 bg-slate-300"></div>
+            <input type="number" id="propFontSize" value="16" min="8" max="72" class="w-12 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-center font-semibold" />
+            <button id="propBoldBtn" class="p-1 rounded hover:bg-slate-200 font-bold" title="Bold">B</button>
+            <button id="propItalicBtn" class="p-1 rounded hover:bg-slate-200 italic font-serif" title="Italic">I</button>
+            <div class="w-px h-4 bg-slate-300"></div>
+            <input type="color" id="propTextColor" value="#0f172a" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" title="Text Color" />
+          </div>
+
+          <!-- 2. Draw / Highlight Properties -->
+          <div id="drawPropertiesBar" class="glass-panel hidden px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-lg text-xs">
+            <span class="text-slate-500 font-medium">Color:</span>
+            <input type="color" id="propDrawColor" value="#4f46e5" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+            <div class="w-px h-4 bg-slate-300"></div>
+            <span class="text-slate-500 font-medium">Width:</span>
+            <input type="range" id="propDrawWidth" min="1" max="25" value="3" class="w-20 accent-indigo-600" />
+          </div>
+
+          <!-- 3. Shape Properties -->
+          <div id="shapePropertiesBar" class="glass-panel hidden px-3 py-1.5 rounded-xl flex items-center space-x-3 shadow-lg text-xs">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-slate-500 font-medium">Outline:</span>
+              <input type="color" id="propShapeStroke" value="#ef4444" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <label class="flex items-center space-x-1 cursor-pointer">
+                <input type="checkbox" id="propShapeFillToggle" class="w-3.5 h-3.5 text-indigo-600 rounded" />
+                <span class="text-slate-600">Fill</span>
+              </label>
+              <input type="color" id="propShapeFill" value="#fca5a5" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+            </div>
+          </div>
+
+          <!-- Primary Tool Selection Bar -->
+          <div class="dark-glass-panel px-3 py-2 rounded-2xl flex items-center space-x-1 shadow-2xl text-slate-300">
+            <!-- Select / Pointer -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 active text-slate-200" data-tool="select" title="Select & Move (V)">
+              <i data-lucide="mouse-pointer-2" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Edit Existing Text -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-amber-400 font-bold flex items-center space-x-1.5" data-tool="edit-text" title="Edit Existing Text on PDF (E)">
+              <i data-lucide="file-edit" class="w-5 h-5"></i>
+              <span class="text-xs hidden sm:inline-block pr-1 font-semibold">Edit Existing Text</span>
+            </button>
+
+            <div class="w-px h-6 bg-slate-700 mx-1"></div>
+
+            <!-- Text -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="text" title="Add New Text (T)">
+              <i data-lucide="type" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Freehand Pen -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="draw" title="Draw Pen">
+              <i data-lucide="pencil" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Highlighter -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="highlight" title="Highlighter">
+              <i data-lucide="highlighter" class="w-5 h-5"></i>
+            </button>
+
+            <div class="w-px h-6 bg-slate-700 mx-1"></div>
+
+            <!-- Rectangle -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="rectangle" title="Rectangle Shape">
+              <i data-lucide="square" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Circle -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="circle" title="Circle Shape">
+              <i data-lucide="circle" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Line -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="line" title="Straight Line">
+              <i data-lucide="minus" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Arrow -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="arrow" title="Arrow">
+              <i data-lucide="move-up-right" class="w-5 h-5"></i>
+            </button>
+
+            <div class="w-px h-6 bg-slate-700 mx-1"></div>
+
+            <!-- Whiteout / Redact -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="whiteout" title="Whiteout / Redaction Box">
+              <i data-lucide="eraser" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Digital Signature -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-indigo-400" data-tool="signature" title="Add Signature">
+              <i data-lucide="pen-tool" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Image Stamp -->
+            <button class="editor-tool-btn tool-btn p-2.5 rounded-xl hover:bg-slate-800 text-slate-200" data-tool="image-upload" title="Insert Image Stamp">
+              <i data-lucide="image-plus" class="w-5 h-5"></i>
+            </button>
+            <input type="file" id="imageUploadInput" accept="image/png, image/jpeg, image/webp" class="hidden" />
+          </div>
+
+        </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 3: MERGE PDF TOOL ==================== -->
+    <div id="view-merge" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Merge PDF Documents</h2>
+        <p class="text-sm text-slate-500 mt-1">Select multiple PDF files, arrange their order, and merge into a single PDF completely on your device.</p>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="mergeDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-indigo-300 rounded-2xl bg-white hover:bg-indigo-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+        <input type="file" id="mergeFileInput" accept="application/pdf" multiple class="hidden" />
+        <div class="w-14 h-14 mx-auto mb-3 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i data-lucide="files" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-base font-bold text-slate-800">Select multiple PDF files to merge</h4>
+        <p class="text-xs text-slate-500 mt-1">or drag and drop them here</p>
+      </div>
+
+      <!-- File List -->
+      <div id="mergeFileList" class="space-y-3 mb-8 hidden">
+        <!-- Rendered file items -->
+      </div>
+
+      <!-- Action Button -->
+      <div class="flex justify-center">
+        <button id="btnExecuteMerge" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-indigo-200 transition-all disabled:opacity-40" disabled>
+          <i data-lucide="layers" class="w-5 h-5"></i>
+          <span>Merge PDF Files</span>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 4: SPLIT PDF TOOL ==================== -->
+    <div id="view-split" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Split PDF Pages</h2>
+        <p class="text-sm text-slate-500 mt-1">Extract specific pages or page ranges from your PDF document.</p>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="splitDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-rose-300 rounded-2xl bg-white hover:bg-rose-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+        <input type="file" id="splitFileInput" accept="application/pdf" class="hidden" />
+        <div class="w-14 h-14 mx-auto mb-3 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i data-lucide="scissors" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-base font-bold text-slate-800">Choose a PDF to Split</h4>
+        <p class="text-xs text-slate-500 mt-1">Instant page-by-page visual extractor</p>
+      </div>
+
+      <!-- Split Workspace -->
+      <div id="splitWorkspace" class="hidden">
+        <!-- Range & Selection Controls -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center space-x-2">
+            <button id="btnSplitSelectAll" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 rounded-lg">Select All</button>
+            <button id="btnSplitDeselectAll" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 rounded-lg">Deselect All</button>
+          </div>
+          <div class="flex items-center space-x-2 flex-1 max-w-md">
+            <span class="text-xs font-medium text-slate-500 whitespace-nowrap">Custom Range:</span>
+            <input type="text" id="splitRangeInput" placeholder="e.g. 1-3, 5, 8-10" class="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:bg-white focus:ring-1 focus:ring-rose-500" />
+          </div>
+          <button id="btnExecuteSplit" class="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 transition-all disabled:opacity-40">
+            Extract Selected Pages
+          </button>
+        </div>
+
+        <!-- Thumbnail Grid -->
+        <div id="splitThumbnailGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <!-- Rendered Thumbnails -->
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 5: ORGANIZE & ROTATE TOOL ==================== -->
+    <div id="view-organize" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Organize & Rotate PDF</h2>
+        <p class="text-sm text-slate-500 mt-1">Reorder pages by dragging, rotate pages 90°, or remove pages with a click.</p>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="organizeDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-amber-300 rounded-2xl bg-white hover:bg-amber-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+        <input type="file" id="organizeFileInput" accept="application/pdf" class="hidden" />
+        <div class="w-14 h-14 mx-auto mb-3 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i data-lucide="layout-grid" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-base font-bold text-slate-800">Select PDF to Organize</h4>
+      </div>
+
+      <!-- Organize Workspace -->
+      <div id="organizeWorkspace" class="hidden">
+        <div class="flex items-center justify-between mb-6 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center space-x-2">
+            <button id="btnRotateAllRight" class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 rounded-lg">
+              <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+              <span>Rotate All 90°</span>
+            </button>
+          </div>
+          <button id="btnSaveOrganized" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-all">
+            Save & Download PDF
+          </button>
+        </div>
+
+        <div id="organizeGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <!-- Page cards -->
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 6: CONVERT TOOL (IMAGE <-> PDF) ==================== -->
+    <div id="view-convert" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Image & PDF Converter</h2>
+        <p class="text-sm text-slate-500 mt-1">Convert photos to PDF or extract PDF pages to high-resolution PNG/JPG images.</p>
+      </div>
+
+      <!-- Mode Tabs -->
+      <div class="flex justify-center mb-8">
+        <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex space-x-2">
+          <button class="convert-tab-btn px-6 py-2 rounded-xl text-sm font-bold transition-all active bg-indigo-600 text-white shadow-sm" data-mode="img-to-pdf">Images to PDF</button>
+          <button class="convert-tab-btn px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:text-indigo-600 transition-all" data-mode="pdf-to-img">PDF to Images (ZIP)</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Image to PDF -->
+      <div id="imgToPdfSection">
+        <div id="imgToPdfDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-emerald-300 rounded-2xl bg-white hover:bg-emerald-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+          <input type="file" id="imgToPdfFileInput" accept="image/png, image/jpeg, image/webp" multiple class="hidden" />
+          <div class="w-14 h-14 mx-auto mb-3 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i data-lucide="image-plus" class="w-7 h-7"></i>
+          </div>
+          <h4 class="text-base font-bold text-slate-800">Select Images (PNG, JPG, WebP)</h4>
+        </div>
+
+        <div id="imgToPdfList" class="space-y-3 mb-6 hidden"></div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex items-center justify-between">
+          <div class="flex items-center space-x-4 text-xs font-medium text-slate-600">
+            <div>
+              <span>Page Size:</span>
+              <select id="imgPdfPageSize" class="ml-1 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                <option value="fit">Fit to Image</option>
+                <option value="A4">Standard A4</option>
+              </select>
+            </div>
+            <div>
+              <span>Margin:</span>
+              <select id="imgPdfMargin" class="ml-1 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                <option value="0">No Margin</option>
+                <option value="20" selected>Small (20px)</option>
+                <option value="40">Large (40px)</option>
+              </select>
+            </div>
+          </div>
+          <button id="btnConvertImgToPdf" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md shadow-emerald-200 transition-all disabled:opacity-40" disabled>
+            Convert to PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 2: PDF to Images -->
+      <div id="pdfToImgSection" class="hidden">
+        <div id="pdfToImgDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-indigo-300 rounded-2xl bg-white hover:bg-indigo-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+          <input type="file" id="pdfToImgFileInput" accept="application/pdf" class="hidden" />
+          <div class="w-14 h-14 mx-auto mb-3 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <i data-lucide="file-image" class="w-7 h-7"></i>
+          </div>
+          <h4 class="text-base font-bold text-slate-800">Select PDF to Extract Images</h4>
+        </div>
+
+        <div id="pdfToImgInfo" class="mb-6 hidden"></div>
+
+        <div id="pdfToImgProgress" class="mb-6 hidden bg-white p-4 rounded-2xl border border-slate-200">
+          <div class="flex justify-between text-xs font-semibold text-slate-600 mb-2">
+            <span class="progress-text">Rendering pages...</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div class="progress-bar-fill bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex items-center justify-between">
+          <div class="flex items-center space-x-4 text-xs font-medium text-slate-600">
+            <div>
+              <span>Format:</span>
+              <select id="pdfImgFormat" class="ml-1 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                <option value="png">PNG (Lossless)</option>
+                <option value="jpg">JPG (Compact)</option>
+              </select>
+            </div>
+            <div>
+              <span>Quality:</span>
+              <select id="pdfImgQuality" class="ml-1 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                <option value="2.0" selected>High (2x Retina)</option>
+                <option value="1.0">Standard (1x)</option>
+                <option value="3.0">Ultra-HD (3x)</option>
+              </select>
+            </div>
+          </div>
+          <button id="btnConvertPdfToImg" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-all disabled:opacity-40" disabled>
+            Download ZIP
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 7: SECURITY & PROTECT TOOL ==================== -->
+    <div id="view-security" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Protect PDF with Password</h2>
+        <p class="text-sm text-slate-500 mt-1">Encrypt your PDF document to prevent unauthorized viewing.</p>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="securityDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-indigo-300 rounded-2xl bg-white hover:bg-indigo-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+        <input type="file" id="securityFileInput" accept="application/pdf" class="hidden" />
+        <div class="w-14 h-14 mx-auto mb-3 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i data-lucide="lock" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-base font-bold text-slate-800">Select PDF to Protect</h4>
+      </div>
+
+      <!-- Security Workspace -->
+      <div id="securityWorkspace" class="hidden bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div id="secFileInfo" class="pb-4 border-b border-slate-100"></div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Set Password</label>
+          <input type="password" id="secPasswordInput" placeholder="Enter secure password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Confirm Password</label>
+          <input type="password" id="secConfirmPasswordInput" placeholder="Repeat password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+
+        <button id="btnExecuteProtect" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-md shadow-indigo-200 transition-all mt-4">
+          Protect & Download PDF
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ==================== VIEW 8: WATERMARK & PAGE NUMBERS TOOL ==================== -->
+    <div id="view-watermark" class="view-container flex-1 overflow-y-auto py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full hidden">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-extrabold text-slate-900">Add Watermark & Numbers</h2>
+        <p class="text-sm text-slate-500 mt-1">Stamp custom text watermarks and automated page numbers with real-time preview.</p>
+      </div>
+
+      <!-- Dropzone -->
+      <div id="watermarkDropzone" class="specialized-dropzone p-8 border-2 border-dashed border-cyan-300 rounded-2xl bg-white hover:bg-cyan-50/50 transition-all cursor-pointer text-center group shadow-sm mb-6">
+        <input type="file" id="watermarkFileInput" accept="application/pdf" class="hidden" />
+        <div class="w-14 h-14 mx-auto mb-3 bg-cyan-100 text-cyan-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+          <i data-lucide="stamp" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-base font-bold text-slate-800">Select PDF to Watermark</h4>
+      </div>
+
+      <!-- Watermark Workspace -->
+      <div id="watermarkWorkspace" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        
+        <!-- Controls Panel -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Watermark Text</label>
+            <input type="text" id="wmText" value="CONFIDENTIAL" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Font Size</label>
+              <input type="number" id="wmFontSize" value="50" min="10" max="150" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Angle (Degrees)</label>
+              <input type="number" id="wmAngle" value="45" min="-90" max="90" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Opacity</label>
+              <input type="range" id="wmOpacity" min="0.05" max="1.0" step="0.05" value="0.25" class="w-full accent-indigo-600" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Color</label>
+              <input type="color" id="wmColor" value="#ef4444" class="w-full h-8 rounded cursor-pointer border-0 bg-transparent" />
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100">
+            <label class="flex items-center space-x-2 cursor-pointer mb-3">
+              <input type="checkbox" id="enablePageNumbers" class="w-4 h-4 text-indigo-600 rounded" />
+              <span class="text-sm font-bold text-slate-800">Add Page Numbers</span>
+            </label>
+            <div class="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block text-slate-500 mb-1">Format</label>
+                <input type="text" id="pageNumFormat" value="Page {n} of {total}" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1" />
+              </div>
+              <div>
+                <label class="block text-slate-500 mb-1">Position</label>
+                <select id="pageNumPos" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1">
+                  <option value="bottom-center">Bottom Center</option>
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="top-right">Top Right</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnApplyWatermark" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-xl font-bold shadow-md shadow-cyan-200 transition-all mt-4">
+            Download Watermarked PDF
+          </button>
+        </div>
+
+        <!-- Live Preview Canvas -->
+        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Live Preview (Page 1)</span>
+          <div class="w-full max-h-[500px] overflow-auto border border-slate-100 rounded-xl flex items-center justify-center p-2 bg-slate-100/50">
+            <canvas id="watermarkPreviewCanvas" class="max-w-full max-h-[480px] shadow-sm rounded bg-white object-contain"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== SIGNATURE MODAL ==================== -->
+  <div id="signatureModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+          <i data-lucide="pen-tool" class="w-5 h-5 text-indigo-600"></i>
+          <span>Create Digital Signature</span>
+        </h3>
+        <button class="close-signature-modal p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Mode Tabs -->
+      <div class="px-6 pt-4 flex space-x-2 border-b border-slate-100">
+        <button class="signature-tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 active" data-tab="draw">Draw</button>
+        <button class="signature-tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="type">Type</button>
+        <button class="signature-tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700" data-tab="upload">Upload</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6">
+        <!-- Tab 1: Draw -->
+        <div class="signature-tab-content" data-tab="draw">
+          <div class="relative border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50 overflow-hidden mb-3">
+            <canvas id="signatureDrawCanvas" width="460" height="180" class="w-full h-44 cursor-crosshair touch-none"></canvas>
+            <div class="absolute bottom-2 left-3 text-[11px] text-slate-400 font-medium pointer-events-none">Draw inside this box</div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs text-slate-500 font-medium">Color:</span>
+              <button class="sig-color-opt w-5 h-5 rounded-full bg-slate-900 ring-2 ring-offset-2 ring-indigo-500" data-color="#0f172a"></button>
+              <button class="sig-color-opt w-5 h-5 rounded-full bg-blue-700" data-color="#1d4ed8"></button>
+              <button class="sig-color-opt w-5 h-5 rounded-full bg-red-600" data-color="#dc2626"></button>
+            </div>
+            <button id="clearSignatureDrawBtn" class="text-xs font-semibold text-slate-500 hover:text-red-600">Clear</button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Type -->
+        <div class="signature-tab-content hidden space-y-4" data-tab="type">
+          <input type="text" id="signatureTextInput" placeholder="Type your full name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-base focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none" value="John Doe" />
+          <div id="signatureTypePreviews" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div class="type-sig-card border-2 border-indigo-600 bg-indigo-50 p-3 rounded-xl cursor-pointer" data-font-name="Great Vibes" data-font-class="font-signature-1">
+              <p class="font-signature-1 text-3xl text-slate-800 type-sig-sample">John Doe</p>
+            </div>
+            <div class="type-sig-card border-2 border-slate-200 hover:border-slate-300 p-3 rounded-xl cursor-pointer" data-font-name="Caveat" data-font-class="font-signature-2">
+              <p class="font-signature-2 text-2xl text-slate-800 type-sig-sample">John Doe</p>
+            </div>
+            <div class="type-sig-card border-2 border-slate-200 hover:border-slate-300 p-3 rounded-xl cursor-pointer" data-font-name="Dancing Script" data-font-class="font-signature-3">
+              <p class="font-signature-3 text-2xl text-slate-800 type-sig-sample">John Doe</p>
+            </div>
+            <div class="type-sig-card border-2 border-slate-200 hover:border-slate-300 p-3 rounded-xl cursor-pointer" data-font-name="Satisfy" data-font-class="font-signature-4">
+              <p class="font-signature-4 text-2xl text-slate-800 type-sig-sample">John Doe</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Upload -->
+        <div class="signature-tab-content hidden space-y-4" data-tab="upload">
+          <div class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center cursor-pointer hover:bg-slate-50" onclick="document.getElementById('signatureFileInput').click()">
+            <input type="file" id="signatureFileInput" accept="image/png, image/jpeg" class="hidden" />
+            <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-slate-400 mb-2"></i>
+            <p class="text-sm font-semibold text-slate-700">Upload signature image</p>
+            <p class="text-xs text-slate-400 mt-1">PNG with transparent background recommended</p>
+          </div>
+          <img id="signatureImagePreview" class="max-h-24 mx-auto object-contain hidden border border-slate-200 rounded p-2" />
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+        <button class="close-signature-modal px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200">Cancel</button>
+        <button id="insertSignatureBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md shadow-indigo-200">Insert Signature</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GLOBAL LOADING OVERLAY -->
+  <div id="globalLoadingOverlay" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center text-white hidden">
+    <div class="w-16 h-16 border-4 border-white/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+    <p class="text-base font-bold">Rendering Document...</p>
+    <p class="text-xs text-slate-300 mt-1">Processing in your browser</p>
+  </div>
+
+  <!-- APPLICATION SCRIPT ENTRYPOINT -->
+  <script type="module" src="./js/app.js?v=3"></script>
+</body>
+</html>

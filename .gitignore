@@ -1,0 +1,20 @@
+# Node / Python / OS temp files
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Temp media storage & test artifacts
+exported_*.pdf
+sample_split_*.pdf
+*.tmp
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
