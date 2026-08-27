@@ -1,0 +1,7 @@
+theme: null
+exclude:
+  - tests
+  - server.ps1
+  - start.bat
+  - sample.pdf
+  - "*.py"
