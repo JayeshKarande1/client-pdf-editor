@@ -1,8 +1,11 @@
 # PDFZen - 100% Client-Side PDF Editor & Productivity Suite
 
-![PDFZen Banner](https://img.shields.io/badge/PDFZen-100%25%20Client--Side-4f46e5?style=for-the-badge&logo=adobeacrobatreader)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Open%20App-indigo?style=for-the-badge&logo=googlechrome)](https://jayeshkarande1.github.io/client-pdf-editor/)
+![100% Client-Side](https://img.shields.io/badge/PDFZen-100%25%20Client--Side-4f46e5?style=for-the-badge&logo=adobeacrobatreader)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Privacy](https://img.shields.io/badge/Privacy-Zero%20Server%20Uploads-blue?style=for-the-badge)
+
+👉 **Live Demo**: [https://jayeshkarande1.github.io/client-pdf-editor/](https://jayeshkarande1.github.io/client-pdf-editor/)
 
 **PDFZen** is a lightning-fast, modern, 100% client-side web application for editing, annotating, signing, merging, splitting, converting, organizing, and securing PDF documents. All operations happen directly in the user's browser using WebAssembly and HTML5 Canvas with **zero backend server processing** and **complete document privacy**.
 
