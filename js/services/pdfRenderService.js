@@ -132,15 +132,29 @@ export class PdfRenderService {
       // Detect Font Family mapping
       let matchedFamily = 'Segoe UI, DejaVu Sans, Arial, sans-serif';
       if (
+        fontStyleObj.serif ||
+        (fontStyleObj.fontFamily && fontStyleObj.fontFamily.toLowerCase().includes('serif')) ||
         cleanFontName.includes('times') ||
         cleanFontName.includes('roman') ||
         cleanFontName.includes('georgia') ||
         cleanFontName.includes('garamond') ||
         cleanFontName.includes('palatino') ||
+        cleanFontName.includes('cambria') ||
+        cleanFontName.includes('baskerville') ||
+        cleanFontName.includes('bookman') ||
+        cleanFontName.includes('century') ||
+        cleanFontName.includes('constantia') ||
+        cleanFontName.includes('didot') ||
+        cleanFontName.includes('minion') ||
+        cleanFontName.includes('merriweather') ||
+        cleanFontName.includes('lucida bright') ||
+        cleanFontName.includes('bell mt') ||
         (cleanFontName.includes('serif') && !cleanFontName.includes('sans'))
       ) {
         matchedFamily = 'Georgia, Times New Roman, serif';
       } else if (
+        fontStyleObj.monospace ||
+        (fontStyleObj.fontFamily && fontStyleObj.fontFamily.toLowerCase().includes('mono')) ||
         cleanFontName.includes('mono') ||
         cleanFontName.includes('courier') ||
         cleanFontName.includes('consolas') ||
