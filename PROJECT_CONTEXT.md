@@ -141,3 +141,5 @@ python tests/test_text_options_drawer.py
 2. **Preserve Self-Hosted Vendor Libraries**: Do not replace `/js/libs/` with external CDN `<script>` tags, as local hosting eliminates CORS worker issues and enables offline usage.
 3. **Use Reactive State**: When modifying document or editor parameters, use `state.updateEditorSettings()` or `state.emit()` so all sub-panels stay synchronized.
 4. **Browser Validation**: Validate visual features and interactions using the Playwright test suite and screenshot inspection.
+-   A l w a y s   d e p l o y   c h a n g e s   d i r e c t l y   t o   G i t H u b   l i v e   ( m a i n   a n d   g h - p a g e s )   a f t e r   m a k i n g   c o d e   u p d a t e s .  
+ 
