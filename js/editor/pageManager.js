@@ -182,6 +182,7 @@ export class PageManager {
       fontFamily: line.fontFamily || 'Segoe UI, DejaVu Sans, Arial, sans-serif',
       fontWeight: line.fontWeight || 'normal',
       fontStyle: line.fontStyle || 'normal',
+      scaleX: line.scaleX || 1,
       fill: '#0f172a',
       selectable: true,
       editable: true

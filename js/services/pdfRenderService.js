@@ -114,9 +114,17 @@ export class PdfRenderService {
 
       const tx = item.transform[4];
       const ty = item.transform[5];
-      const fontHeight = Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]);
-      // Web fonts typically render slightly smaller than PDF internal metrics, so we bump the size by 5%
-      const scaledFontSize = Math.round(fontHeight * scale * 1.05);
+      
+      // Calculate true font height (vertical scale uses transform[2] and [3])
+      const fontHeight = Math.sqrt(item.transform[2] * item.transform[2] + item.transform[3] * item.transform[3]) || 
+                         Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]);
+      
+      // Calculate horizontal scale to determine if text is stretched or compressed
+      const fontWidthScale = Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]);
+      // Some PDFs compress text horizontally. We can apply this ratio to Fabric's scaleX
+      const textScaleX = (fontHeight > 0) ? (fontWidthScale / fontHeight) : 1;
+
+      const scaledFontSize = Math.round(fontHeight * scale);
 
       const [vx, vy] = viewport.convertToViewportPoint(tx, ty);
       const width = item.width * scale;
@@ -198,7 +206,8 @@ export class PdfRenderService {
         fontFamily: matchedFamily,
         fontWeight: isBold ? 'bold' : 'normal',
         fontStyle: isItalic ? 'italic' : 'normal',
-        fontName: cleanFontName
+        fontName: cleanFontName,
+        scaleX: textScaleX
       });
     }
 
