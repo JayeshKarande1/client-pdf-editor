@@ -115,7 +115,8 @@ export class PdfRenderService {
       const tx = item.transform[4];
       const ty = item.transform[5];
       const fontHeight = Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]);
-      const scaledFontSize = Math.round(fontHeight * scale);
+      // Web fonts typically render slightly smaller than PDF internal metrics, so we bump the size by 5%
+      const scaledFontSize = Math.round(fontHeight * scale * 1.05);
 
       const [vx, vy] = viewport.convertToViewportPoint(tx, ty);
       const width = item.width * scale;
@@ -212,7 +213,14 @@ export class PdfRenderService {
         item.left - (lastLine.left + lastLine.width) <= maxGap &&
         item.left >= lastLine.left
       ) {
-        const spacer = item.left - (lastLine.left + lastLine.width) > 2 ? ' ' : '';
+        const gap = item.left - (lastLine.left + lastLine.width);
+        let spacer = '';
+        if (gap > 2) {
+           // Approximate width of a space character is ~25% of font size. Calculate how many spaces fit in the gap.
+           const spaceWidth = Math.max(3, lastLine.fontSize * 0.25);
+           const numSpaces = Math.max(1, Math.round(gap / spaceWidth));
+           spacer = ' '.repeat(numSpaces);
+        }
         lastLine.str += spacer + item.str;
         lastLine.width = (item.left + item.width) - lastLine.left;
         lastLine.height = Math.max(lastLine.height, item.height);
