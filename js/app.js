@@ -46,7 +46,42 @@ class App {
     if (window.lucide) {
       window.lucide.createIcons();
     }
+
+    // 7. Wire up the Edit Mode Banner to the toolChanged event
+    state.subscribe('toolChanged', (tool) => {
+      const banner = document.getElementById('editModeBanner');
+      if (banner) banner.classList.toggle('visible', tool === 'edit-text');
+    });
   }
+
+  /**
+   * Show a toast notification (replaces alert())
+   * @param {string} message
+   * @param {'success'|'error'|'info'|'warning'} type
+   * @param {number} duration ms
+   */
+  static showToast(message, type = 'info', duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      info: 'ℹ',
+      warning: '⚠'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span style="font-size:16px;flex-shrink:0">${icons[type]}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-exit');
+      toast.addEventListener('animationend', () => toast.remove());
+    }, duration);
+  }
+
 
   static setupNavigation() {
     // Nav bar links & dashboard cards
@@ -127,7 +162,7 @@ class App {
       await this.loadDocumentIntoEditor(file);
     } catch (err) {
       console.error('Failed to load sample.pdf', err);
-      alert(`Could not load sample.pdf: ${err.message}`);
+      App.showToast(`Could not load sample PDF: ${err.message}`, 'error');
     }
   }
 
@@ -166,9 +201,10 @@ class App {
 
       if (loadingOverlay) loadingOverlay.classList.add('hidden');
       if (window.lucide) window.lucide.createIcons();
+      App.showToast(`"${file.name}" opened successfully`, 'success');
     } catch (err) {
       console.error('[PDFZen] Error opening PDF in editor:', err);
-      alert(`Could not open PDF: ${err.message}\nCheck console for details.`);
+      App.showToast(`Could not open PDF: ${err.message}`, 'error');
       if (loadingOverlay) loadingOverlay.classList.add('hidden');
     }
   }
@@ -206,9 +242,10 @@ class App {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        App.showToast('PDF saved and downloaded!', 'success');
       } catch (err) {
         console.error('Export failed', err);
-        alert(`Export failed: ${err.message}`);
+        App.showToast(`Export failed: ${err.message}`, 'error');
       } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = originalText;

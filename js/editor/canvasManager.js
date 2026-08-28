@@ -97,7 +97,21 @@ export class CanvasManager {
     canvas.on('mouse:down', (options) => {
       state.setCurrentPage(pageIndex + 1);
       const tool = state.editor.activeTool;
-      if (tool === 'select' || tool === 'edit-text') return;
+
+      // BUG 1 FIX: When 'edit-text' mode is active, clicking an existing i-text re-enters editing
+      if (tool === 'edit-text') {
+        const target = canvas.findTarget(options.e);
+        if (target && (target.type === 'i-text' || target.type === 'text')) {
+          canvas.setActiveObject(target);
+          setTimeout(() => {
+            target.enterEditing();
+            canvas.renderAll();
+          }, 30);
+        }
+        return;
+      }
+
+      if (tool === 'select') return;
 
       const pointer = canvas.getPointer(options.e);
       startX = pointer.x;

@@ -123,13 +123,28 @@ export class PageManager {
     const fabricCanvas = state.doc.pageCanvases.get(pageIndex);
     if (!fabricCanvas) return;
 
+    // BUG 3 FIX: Sample the background color from the PDF canvas at the text location
+    // so the mask blends in naturally even on colored/grey backgrounds.
+    let maskColor = '#ffffff';
+    try {
+      const bgCanvas = document.getElementById(`pdf-bg-${pageIndex}`);
+      if (bgCanvas) {
+        const ctx = bgCanvas.getContext('2d');
+        const pixelRatio = window.devicePixelRatio || 1;
+        const sampleX = Math.floor((line.left + line.width / 2) * pixelRatio);
+        const sampleY = Math.floor((line.top + line.height / 2) * pixelRatio);
+        const px = ctx.getImageData(sampleX, sampleY, 1, 1).data;
+        maskColor = `rgb(${px[0]}, ${px[1]}, ${px[2]})`;
+      }
+    } catch (e) { /* fallback to white if sampling fails */ }
+
     // 1. Create clean opaque background mask covering the original text
     const mask = new window.fabric.Rect({
       left: Math.max(0, line.left - 4),
       top: Math.max(0, line.top - 3),
       width: line.width + 8,
       height: line.height + 6,
-      fill: '#ffffff',
+      fill: maskColor,
       stroke: 'transparent',
       selectable: false,
       evented: false,
