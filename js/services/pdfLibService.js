@@ -54,26 +54,78 @@ export class PdfLibService {
       // Check if there are annotations on this page's Fabric canvas
       const fabricCanvas = pageCanvases.get(originalPageIndex);
       if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
-        // Render fabric canvas to ultra high-res transparent PNG (300 DPI equivalent)
-        const multiplier = 3;
-        const dataUrl = fabricCanvas.toDataURL({
-          format: 'png',
-          multiplier: multiplier,
-          enableRetinaScaling: true
-        });
-
-        const pngImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
-        const pngImage = await outputDoc.embedPng(pngImageBytes);
-
+        const objects = fabricCanvas.getObjects();
+        const vectorObjects = objects.filter(o => o.type === 'i-text' || o.type === 'rect');
+        const rasterObjects = objects.filter(o => o.type !== 'i-text' && o.type !== 'rect');
         const { width, height } = newPage.getSize();
-        
-        // Draw the annotation overlay
-        newPage.drawImage(pngImage, {
-          x: 0,
-          y: 0,
-          width: width,
-          height: height
-        });
+        const { StandardFonts, rgb } = this.getPDFLib();
+
+        // 1. Draw Raster Objects (Paths, Images, Signatures)
+        if (rasterObjects.length > 0) {
+          // Temporarily hide vector objects so they aren't rasterized
+          vectorObjects.forEach(o => o.visible = false);
+          fabricCanvas.renderAll();
+
+          const multiplier = 3;
+          const dataUrl = fabricCanvas.toDataURL({
+            format: 'png',
+            multiplier: multiplier,
+            enableRetinaScaling: true
+          });
+
+          const pngImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
+          const pngImage = await outputDoc.embedPng(pngImageBytes);
+          
+          newPage.drawImage(pngImage, {
+            x: 0,
+            y: 0,
+            width: width,
+            height: height
+          });
+
+          // Restore vector object visibility
+          vectorObjects.forEach(o => o.visible = true);
+          fabricCanvas.renderAll();
+        }
+
+        // 2. Draw Vector Objects natively
+        for (const obj of vectorObjects) {
+          const rgbColor = this._parseFabricColor(obj.fill);
+          
+          // Fabric scales the bounding box using scaleX/scaleY.
+          const objWidth = (obj.width || 0) * (obj.scaleX || 1);
+          const objHeight = (obj.height || 0) * (obj.scaleY || 1);
+          const angle = obj.angle || 0;
+          
+          if (obj.type === 'rect') {
+            newPage.drawRectangle({
+              x: obj.left,
+              y: height - obj.top - objHeight,
+              width: objWidth,
+              height: objHeight,
+              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
+              opacity: obj.opacity !== undefined ? obj.opacity : 1,
+              rotate: degrees(-angle)
+            });
+          } else if (obj.type === 'i-text' || obj.type === 'text') {
+            const standardFont = await this._getStandardFont(outputDoc, StandardFonts, obj);
+            const scaledFontSize = (obj.fontSize || 16) * (obj.scaleY || 1);
+            
+            // Fabric obj.top is the top of the bounding box. PDF.js text is drawn from the baseline.
+            // Baseline is roughly 80% down the bounding box for standard fonts.
+            const baselineY = height - obj.top - (scaledFontSize * 0.82);
+            
+            newPage.drawText(obj.text || '', {
+              x: obj.left,
+              y: baselineY,
+              size: scaledFontSize,
+              font: standardFont,
+              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
+              opacity: obj.opacity !== undefined ? obj.opacity : 1,
+              rotate: degrees(-angle)
+            });
+          }
+        }
       }
     }
 
@@ -217,5 +269,50 @@ export class PdfLibService {
     }
 
     return await doc.save();
+  }
+  
+  static async _getStandardFont(outputDoc, StandardFonts, textObj) {
+    const family = (textObj.fontFamily || '').toLowerCase();
+    const isBold = textObj.fontWeight === 'bold' || textObj.fontWeight >= 600;
+    const isItalic = textObj.fontStyle === 'italic' || textObj.fontStyle === 'oblique';
+
+    let fontName = StandardFonts.Helvetica;
+    
+    if (family.includes('times') || family.includes('serif')) {
+      if (isBold && isItalic) fontName = StandardFonts.TimesRomanBoldItalic;
+      else if (isBold) fontName = StandardFonts.TimesRomanBold;
+      else if (isItalic) fontName = StandardFonts.TimesRomanItalic;
+      else fontName = StandardFonts.TimesRoman;
+    } else if (family.includes('courier') || family.includes('mono')) {
+      if (isBold && isItalic) fontName = StandardFonts.CourierBoldOblique;
+      else if (isBold) fontName = StandardFonts.CourierBold;
+      else if (isItalic) fontName = StandardFonts.CourierOblique;
+      else fontName = StandardFonts.Courier;
+    } else {
+      if (isBold && isItalic) fontName = StandardFonts.HelveticaBoldOblique;
+      else if (isBold) fontName = StandardFonts.HelveticaBold;
+      else if (isItalic) fontName = StandardFonts.HelveticaOblique;
+      else fontName = StandardFonts.Helvetica;
+    }
+
+    return await outputDoc.embedFont(fontName);
+  }
+
+  static _parseFabricColor(colorStr) {
+    if (!colorStr) return { r: 0, g: 0, b: 0 };
+    
+    if (!this._colorCtx) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      this._colorCtx = canvas.getContext('2d');
+    }
+    
+    this._colorCtx.fillStyle = '#000000';
+    this._colorCtx.fillStyle = colorStr;
+    this._colorCtx.fillRect(0, 0, 1, 1);
+    const data = this._colorCtx.getImageData(0, 0, 1, 1).data;
+    
+    return { r: data[0] / 255, g: data[1] / 255, b: data[2] / 255 };
   }
 }
