@@ -167,8 +167,18 @@ export class PdfRenderService {
       const isBold = cleanFontName.includes('bold') || cleanFontName.includes('heavy') || cleanFontName.includes('black') || (commonObj && commonObj.bold) || (item.transform[0] > fontHeight * 1.15);
       const isItalic = cleanFontName.includes('italic') || cleanFontName.includes('oblique') || (item.transform[2] && Math.abs(item.transform[2]) > 0.05) || (commonObj && commonObj.italic);
 
-      // Keep the original string without normalizing bullets
-      let cleanStr = item.str;
+      // Map Private Use Area (PUA) symbols (commonly used by PDF Symbol fonts) to standard Unicode equivalents 
+      // to prevent the browser from rendering them as empty missing-glyph squares (tofu)
+      let cleanStr = item.str
+        .replace(/[\uF0B7\uF0A8\uF076\uF0D8\uF0E0]/g, '•') // standard round bullets
+        .replace(/[\uF06E\uF071]/g, '■') // square bullets
+        .replace(/[\uF0A4\uF0B0]/g, '○') // hollow bullets
+        .replace(/[\uF02D\uF0AD]/g, '-'); // dashes
+        
+      // Fallback for any other single-character PUA bullet symbol
+      if (cleanStr.length === 1 && /^[\uF000-\uF0FF]$/.test(cleanStr)) {
+        cleanStr = '•';
+      }
 
       rawItems.push({
         str: cleanStr,
@@ -193,7 +203,7 @@ export class PdfRenderService {
 
     for (const item of rawItems) {
       const lastLine = lines[lines.length - 1];
-      const isBulletLine = lastLine && /^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-]/.test(lastLine.str.trim());
+      const isBulletLine = lastLine && /^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-\u25A0\u25CB]/.test(lastLine.str.trim());
       const maxGap = isBulletLine ? 35 : (item.fontSize * 1.5);
 
       if (
@@ -208,7 +218,7 @@ export class PdfRenderService {
         lastLine.height = Math.max(lastLine.height, item.height);
         lastLine.fontSize = Math.max(lastLine.fontSize, item.fontSize);
         // If appending text to a bullet symbol, inherit the text's font family, weight, and style
-        if (/^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-]/.test(lastLine.str) && !/^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-]/.test(item.str)) {
+        if (/^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-\u25A0\u25CB]/.test(lastLine.str) && !/^[\u2022\u25CF\u25AA\u25E6\u00B7\u2023\u2043\u2219\-\u25A0\u25CB]/.test(item.str)) {
           lastLine.fontFamily = item.fontFamily;
           lastLine.fontWeight = item.fontWeight;
           lastLine.fontStyle = item.fontStyle;
