@@ -123,18 +123,41 @@ export class PageManager {
     const fabricCanvas = state.doc.pageCanvases.get(pageIndex);
     if (!fabricCanvas) return;
 
-    // BUG 3 FIX: Sample the background color from the PDF canvas at the text location
-    // so the mask blends in naturally even on colored/grey backgrounds.
+    // Sample the background color from the PDF canvas.
+    // IMPORTANT: We do NOT sample from the center of the text (that would pick up the ink color).
+    // Instead we sample from just ABOVE the text line, and from a few candidates,
+    // then pick the LIGHTEST pixel (highest sum of RGB) — that is most likely the background.
     let maskColor = '#ffffff';
     try {
       const bgCanvas = document.getElementById(`pdf-bg-${pageIndex}`);
       if (bgCanvas) {
         const ctx = bgCanvas.getContext('2d');
         const pixelRatio = window.devicePixelRatio || 1;
-        const sampleX = Math.floor((line.left + line.width / 2) * pixelRatio);
-        const sampleY = Math.floor((line.top + line.height / 2) * pixelRatio);
-        const px = ctx.getImageData(sampleX, sampleY, 1, 1).data;
-        maskColor = `rgb(${px[0]}, ${px[1]}, ${px[2]})`;
+
+        // Sample points: above the text, and to the far left & right edges of the block
+        const candidates = [
+          { x: line.left + line.width / 2, y: line.top - Math.max(4, line.height * 0.5) }, // above
+          { x: line.left - 8,              y: line.top + line.height / 2 },                  // left of text
+          { x: line.left + line.width + 8, y: line.top + line.height / 2 },                  // right of text
+          { x: line.left + line.width / 2, y: line.top + line.height + Math.max(4, line.height * 0.5) } // below
+        ];
+
+        let bestPixel = [255, 255, 255]; // fallback to white
+        let bestBrightness = -1;
+
+        for (const pt of candidates) {
+          const sx = Math.floor(pt.x * pixelRatio);
+          const sy = Math.floor(pt.y * pixelRatio);
+          if (sx < 0 || sy < 0 || sx >= bgCanvas.width || sy >= bgCanvas.height) continue;
+          const px = ctx.getImageData(sx, sy, 1, 1).data;
+          const brightness = px[0] + px[1] + px[2]; // higher = lighter = more likely background
+          if (brightness > bestBrightness) {
+            bestBrightness = brightness;
+            bestPixel = [px[0], px[1], px[2]];
+          }
+        }
+
+        maskColor = `rgb(${bestPixel[0]}, ${bestPixel[1]}, ${bestPixel[2]})`;
       }
     } catch (e) { /* fallback to white if sampling fails */ }
 
