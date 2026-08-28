@@ -54,78 +54,26 @@ export class PdfLibService {
       // Check if there are annotations on this page's Fabric canvas
       const fabricCanvas = pageCanvases.get(originalPageIndex);
       if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
-        const objects = fabricCanvas.getObjects();
-        const vectorObjects = objects.filter(o => o.type === 'i-text' || o.type === 'rect');
-        const rasterObjects = objects.filter(o => o.type !== 'i-text' && o.type !== 'rect');
+        // Render fabric canvas to ultra high-res transparent PNG to preserve exact fonts and unicode symbols
+        const multiplier = 5; // Bumped to 5x for maximum crispness (fixes blurriness)
+        const dataUrl = fabricCanvas.toDataURL({
+          format: 'png',
+          multiplier: multiplier,
+          enableRetinaScaling: true
+        });
+
+        const pngImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
+        const pngImage = await outputDoc.embedPng(pngImageBytes);
+
         const { width, height } = newPage.getSize();
-        const { StandardFonts, rgb } = this.getPDFLib();
-
-        // 1. Draw Raster Objects (Paths, Images, Signatures)
-        if (rasterObjects.length > 0) {
-          // Temporarily hide vector objects so they aren't rasterized
-          vectorObjects.forEach(o => o.visible = false);
-          fabricCanvas.renderAll();
-
-          const multiplier = 3;
-          const dataUrl = fabricCanvas.toDataURL({
-            format: 'png',
-            multiplier: multiplier,
-            enableRetinaScaling: true
-          });
-
-          const pngImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
-          const pngImage = await outputDoc.embedPng(pngImageBytes);
-          
-          newPage.drawImage(pngImage, {
-            x: 0,
-            y: 0,
-            width: width,
-            height: height
-          });
-
-          // Restore vector object visibility
-          vectorObjects.forEach(o => o.visible = true);
-          fabricCanvas.renderAll();
-        }
-
-        // 2. Draw Vector Objects natively
-        for (const obj of vectorObjects) {
-          const rgbColor = this._parseFabricColor(obj.fill);
-          
-          // Fabric scales the bounding box using scaleX/scaleY.
-          const objWidth = (obj.width || 0) * (obj.scaleX || 1);
-          const objHeight = (obj.height || 0) * (obj.scaleY || 1);
-          const angle = obj.angle || 0;
-          
-          if (obj.type === 'rect') {
-            newPage.drawRectangle({
-              x: obj.left,
-              y: height - obj.top - objHeight,
-              width: objWidth,
-              height: objHeight,
-              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
-              opacity: obj.opacity !== undefined ? obj.opacity : 1,
-              rotate: degrees(-angle)
-            });
-          } else if (obj.type === 'i-text' || obj.type === 'text') {
-            const standardFont = await this._getStandardFont(outputDoc, StandardFonts, obj);
-            const scaledFontSize = (obj.fontSize || 16) * (obj.scaleY || 1);
-            
-            // Fabric obj.top is the top of the bounding box. PDF.js text is drawn from the baseline.
-            // Baseline is roughly 80% down the bounding box for standard fonts.
-            const baselineY = height - obj.top - (scaledFontSize * 0.82);
-            
-            newPage.drawText(obj.text || '', {
-              x: obj.left,
-              y: baselineY,
-              size: scaledFontSize,
-              font: standardFont,
-              color: rgb(rgbColor.r, rgbColor.g, rgbColor.b),
-              opacity: obj.opacity !== undefined ? obj.opacity : 1,
-              rotate: degrees(-angle)
-            });
-          }
-        }
+        
+        // Draw the annotation overlay
+        newPage.drawImage(pngImage, {
+          x: 0,
+          y: 0,
+          width: width,
+          height: height
+        });
       }
     }
 
