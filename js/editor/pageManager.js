@@ -123,10 +123,9 @@ export class PageManager {
     const fabricCanvas = state.doc.pageCanvases.get(pageIndex);
     if (!fabricCanvas) return;
 
-    // Sample the background color from the PDF canvas.
-    // IMPORTANT: We do NOT sample from the center of the text (that would pick up the ink color).
-    // Instead we sample from just ABOVE the text line, and from a few candidates,
-    // then pick the LIGHTEST pixel (highest sum of RGB) — that is most likely the background.
+    // Sample the background color from the PDF canvas.  Do not pick the lightest
+    // pixel: on cream/grey pages that turns the mask into a visible white box.
+    // A median of pixels around the line is resilient to antialiasing and nearby ink.
     let maskColor = '#ffffff';
     try {
       const bgCanvas = document.getElementById(`pdf-bg-${pageIndex}`);
@@ -134,7 +133,8 @@ export class PageManager {
         const ctx = bgCanvas.getContext('2d');
         const pixelRatio = window.devicePixelRatio || 1;
 
-        // Sample points: above the text, and to the far left & right edges of the block
+        // Sample points above, below, and at both ends of the line. Each point is
+        // averaged over a small patch so a single glyph/antialiased pixel is ignored.
         const candidates = [
           { x: line.left + line.width / 2, y: line.top - Math.max(4, line.height * 0.5) }, // above
           { x: line.left - 8,              y: line.top + line.height / 2 },                  // left of text
@@ -142,22 +142,30 @@ export class PageManager {
           { x: line.left + line.width / 2, y: line.top + line.height + Math.max(4, line.height * 0.5) } // below
         ];
 
-        let bestPixel = [255, 255, 255]; // fallback to white
-        let bestBrightness = -1;
+        const samples = [];
 
         for (const pt of candidates) {
           const sx = Math.floor(pt.x * pixelRatio);
           const sy = Math.floor(pt.y * pixelRatio);
           if (sx < 0 || sy < 0 || sx >= bgCanvas.width || sy >= bgCanvas.height) continue;
-          const px = ctx.getImageData(sx, sy, 1, 1).data;
-          const brightness = px[0] + px[1] + px[2]; // higher = lighter = more likely background
-          if (brightness > bestBrightness) {
-            bestBrightness = brightness;
-            bestPixel = [px[0], px[1], px[2]];
+          const radius = Math.max(1, Math.round(pixelRatio));
+          const x = Math.max(0, sx - radius);
+          const y = Math.max(0, sy - radius);
+          const width = Math.min(bgCanvas.width - x, radius * 2 + 1);
+          const height = Math.min(bgCanvas.height - y, radius * 2 + 1);
+          const pixels = ctx.getImageData(x, y, width, height).data;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] > 0) samples.push([pixels[i], pixels[i + 1], pixels[i + 2]]);
           }
         }
 
-        maskColor = `rgb(${bestPixel[0]}, ${bestPixel[1]}, ${bestPixel[2]})`;
+        if (samples.length) {
+          const median = (channel) => {
+            const values = samples.map(pixel => pixel[channel]).sort((a, b) => a - b);
+            return values[Math.floor(values.length / 2)];
+          };
+          maskColor = `rgb(${median(0)}, ${median(1)}, ${median(2)})`;
+        }
       }
     } catch (e) { /* fallback to white if sampling fails */ }
 
@@ -169,6 +177,7 @@ export class PageManager {
       height: line.height + 6,
       fill: maskColor,
       strokeWidth: 0,
+      stroke: null,
       selectable: false,
       evented: false,
       _isTemporary: true
@@ -185,7 +194,19 @@ export class PageManager {
       scaleX: line.scaleX || 1,
       fill: '#0f172a',
       selectable: true,
-      editable: true
+      editable: true,
+      hasBorders: false,
+      hasControls: false,
+      borderColor: 'rgba(0,0,0,0)',
+      editingBorderColor: 'rgba(0,0,0,0)',
+      padding: 0
+    });
+
+    // Keep mask wide enough if the user types longer text
+    textObj.on('changed', () => {
+      const currentWidth = (textObj.width * (textObj.scaleX || 1));
+      mask.set('width', Math.max(line.width + 8, currentWidth + 8));
+      fabricCanvas.requestRenderAll();
     });
 
     fabricCanvas.add(mask);

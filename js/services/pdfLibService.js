@@ -54,13 +54,31 @@ export class PdfLibService {
       // Check if there are annotations on this page's Fabric canvas
       const fabricCanvas = pageCanvases.get(originalPageIndex);
       if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
+        // Fabric's selection controls and whiteout guide are editor chrome. Never
+        // rasterize either into the downloaded document.
+        const activeObject = fabricCanvas.getActiveObject();
+        const whiteoutGuides = fabricCanvas.getObjects()
+          .filter(object => object._isWhiteout)
+          .map(object => ({ object, stroke: object.stroke, strokeDashArray: object.strokeDashArray }));
+
+        fabricCanvas.discardActiveObject();
+        whiteoutGuides.forEach(({ object }) => object.set({ stroke: 'transparent', strokeDashArray: null }));
+        fabricCanvas.renderAll();
+
         // Render fabric canvas to ultra high-res transparent PNG to preserve exact fonts and unicode symbols
-        const multiplier = 5; // Bumped to 5x for maximum crispness (fixes blurriness)
-        const dataUrl = fabricCanvas.toDataURL({
-          format: 'png',
-          multiplier: multiplier,
-          enableRetinaScaling: true
-        });
+        let dataUrl;
+        try {
+          const multiplier = 5; // Bumped to 5x for maximum crispness (fixes blurriness)
+          dataUrl = fabricCanvas.toDataURL({
+            format: 'png',
+            multiplier: multiplier,
+            enableRetinaScaling: true
+          });
+        } finally {
+          whiteoutGuides.forEach(({ object, stroke, strokeDashArray }) => object.set({ stroke, strokeDashArray }));
+          if (activeObject) fabricCanvas.setActiveObject(activeObject);
+          fabricCanvas.renderAll();
+        }
 
         const pngImageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
         const pngImage = await outputDoc.embedPng(pngImageBytes);

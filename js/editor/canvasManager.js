@@ -40,6 +40,14 @@ export class CanvasManager {
       borderDashArray: [4, 4]
     });
 
+    // Fabric by default adds a rectangular bounding outline around IText while editing or selecting.
+    // In a PDF editor, this looks like an accidental border on replaced text. Completely disable it.
+    window.fabric.IText.prototype.hasBorders = false;
+    window.fabric.IText.prototype.hasControls = false;
+    window.fabric.IText.prototype.editingBorderColor = 'rgba(0,0,0,0)';
+    window.fabric.IText.prototype.borderColor = 'rgba(0,0,0,0)';
+    window.fabric.IText.prototype.padding = 0;
+
     // Store in global state
     state.doc.pageCanvases.set(pageIndex, fabricCanvas);
 
@@ -157,6 +165,8 @@ export class CanvasManager {
           stroke: isWhiteout ? '#e2e8f0' : state.editor.shapeStrokeColor,
           strokeWidth: isWhiteout ? 1 : state.editor.shapeStrokeWidth,
           strokeDashArray: isWhiteout ? [2, 2] : null,
+          // Keep the guide visible while editing, but do not bake it into the PDF.
+          _isWhiteout: isWhiteout,
           selectable: true,
           _isTemporary: true
         });
