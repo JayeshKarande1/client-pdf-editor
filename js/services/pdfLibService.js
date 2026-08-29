@@ -54,15 +54,21 @@ export class PdfLibService {
       // Check if there are annotations on this page's Fabric canvas
       const fabricCanvas = pageCanvases.get(originalPageIndex);
       if (fabricCanvas && fabricCanvas.getObjects().length > 0) {
-        // Fabric's selection controls and whiteout guide are editor chrome. Never
+        // Fabric's selection controls, editing cursor, and whiteout guide are editor chrome. Never
         // rasterize either into the downloaded document.
+        fabricCanvas.getObjects().forEach(object => {
+          if (object.isEditing && typeof object.exitEditing === 'function') {
+            object.exitEditing();
+          }
+        });
+
         const activeObject = fabricCanvas.getActiveObject();
         const whiteoutGuides = fabricCanvas.getObjects()
           .filter(object => object._isWhiteout)
           .map(object => ({ object, stroke: object.stroke, strokeDashArray: object.strokeDashArray }));
 
         fabricCanvas.discardActiveObject();
-        whiteoutGuides.forEach(({ object }) => object.set({ stroke: 'transparent', strokeDashArray: null }));
+        whiteoutGuides.forEach(({ object }) => object.set({ stroke: 'transparent', strokeDashArray: null, strokeWidth: 0 }));
         fabricCanvas.renderAll();
 
         // Render fabric canvas to ultra high-res transparent PNG to preserve exact fonts and unicode symbols

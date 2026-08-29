@@ -169,12 +169,14 @@ export class PageManager {
       }
     } catch (e) { /* fallback to white if sampling fails */ }
 
-    // 1. Create clean opaque background mask covering the original text
+    // 1. Create clean opaque background mask covering the original text (including all ascenders and descenders)
+    const maskPaddingY = Math.max(8, (line.fontSize || 16) * 0.35);
+    const maskPaddingX = 8;
     const mask = new window.fabric.Rect({
-      left: Math.max(0, line.left - 4),
-      top: Math.max(0, line.top - 3),
-      width: line.width + 8,
-      height: line.height + 6,
+      left: Math.max(0, line.left - maskPaddingX),
+      top: Math.max(0, line.top - 4),
+      width: line.width + (maskPaddingX * 2),
+      height: line.height + maskPaddingY,
       fill: maskColor,
       strokeWidth: 0,
       stroke: null,
@@ -205,7 +207,7 @@ export class PageManager {
     // Keep mask wide enough if the user types longer text
     textObj.on('changed', () => {
       const currentWidth = (textObj.width * (textObj.scaleX || 1));
-      mask.set('width', Math.max(line.width + 8, currentWidth + 8));
+      mask.set('width', Math.max(line.width + (maskPaddingX * 2), currentWidth + (maskPaddingX * 2)));
       fabricCanvas.requestRenderAll();
     });
 
