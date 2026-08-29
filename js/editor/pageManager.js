@@ -168,7 +168,7 @@ export class PageManager {
       width: line.width + 8,
       height: line.height + 6,
       fill: maskColor,
-      stroke: 'transparent',
+      strokeWidth: 0,
       selectable: false,
       evented: false,
       _isTemporary: true
