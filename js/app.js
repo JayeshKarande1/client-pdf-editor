@@ -19,6 +19,27 @@ import { WatermarkTool } from './tools/watermarkTool.js';
 
 class App {
   static init() {
+    // 0. Apply Feature Flags from ENV (config.js)
+    if (window.ENV) {
+      const featureViews = {
+        'merge': window.ENV.ENABLE_MERGE,
+        'split': window.ENV.ENABLE_SPLIT,
+        'organize': window.ENV.ENABLE_ORGANIZE,
+        'convert': window.ENV.ENABLE_CONVERT,
+        'watermark': window.ENV.ENABLE_WATERMARK,
+        'security': window.ENV.ENABLE_SECURITY
+      };
+      
+      for (const [view, isEnabled] of Object.entries(featureViews)) {
+        if (!isEnabled) {
+          // Hide both top navbar links and home dashboard cards for this feature
+          document.querySelectorAll(`[data-nav-view="${view}"]`).forEach(el => {
+            el.style.display = 'none';
+          });
+        }
+      }
+    }
+
     // 1. Initialize Sub-modules
     EditorToolbar.init();
     TextOptionsPanel.init();
